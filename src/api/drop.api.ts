@@ -9,4 +9,17 @@ export const dropApi = {
     }
     return response.data.data;
   },
+
+  create: async (data: {
+    name: string;
+    category: string;
+    initialStock: number;
+    startsAt: string;
+  }): Promise<Drop> => {
+    const response = await axiosInstance.post<{ success: boolean; data: Drop; message?: string }>('/drops', data);
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Failed to create drop');
+    }
+    return response.data.data;
+  },
 };

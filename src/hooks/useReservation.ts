@@ -25,13 +25,8 @@ export function useReservation(userId: number | undefined) {
     mutationFn: ({ userId, dropId, reservationId }: { userId: number; dropId: number; reservationId: number }) =>
       purchaseApi.create(userId, dropId, reservationId),
     onSuccess: (_, variables) => {
-      queryClient.setQueryData(['reservations'], (oldData: { data: Reservation[] } | undefined) => {
-        if (!oldData?.data) return oldData;
-        return {
-          ...oldData,
-          data: oldData.data.filter((reservation) => reservation.id !== variables.reservationId),
-        };
-      });
+      // Invalidate reservations query to ensure fresh data is fetched when user returns
+      queryClient.invalidateQueries({ queryKey: ['reservations'] });
     },
   });
 

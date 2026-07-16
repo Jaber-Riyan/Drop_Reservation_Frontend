@@ -1,14 +1,22 @@
+import { useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useReservation } from '../hooks/useReservation';
 import { Countdown } from '../components/Countdown';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../components/Toast';
+import { useQueryClient } from '@tanstack/react-query';
 
 export function ReservationPage() {
   const { user } = useAuth();
   const { activeReservation, isLoading, createPurchase, createPurchase: purchase } = useReservation(user?.id);
   const navigate = useNavigate();
   const toast = useToast();
+  const queryClient = useQueryClient();
+
+  // Refetch reservations when page loads to get latest data
+  useEffect(() => {
+    queryClient.invalidateQueries({ queryKey: ['reservations', user?.id] });
+  }, [queryClient, user?.id]);
 
   const handlePurchase = () => {
     if (!activeReservation || !user) return;
@@ -24,6 +32,10 @@ export function ReservationPage() {
         },
         onSuccess: () => {
           toast.showToast('Purchase completed successfully!', 'success');
+          // Redirect to dashboard after short delay to show success message
+          setTimeout(() => {
+            navigate('/dashboard');
+          }, 1500);
         },
       }
     );

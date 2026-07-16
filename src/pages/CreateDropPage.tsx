@@ -1,5 +1,9 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { dropApi } from '../api/drop.api';
+import { useToast } from '../components/Toast';
+import type { Drop } from '../types';
 
 export function CreateDropPage() {
   const [name, setName] = useState('');
@@ -8,6 +12,29 @@ export function CreateDropPage() {
   const [startsAt, setStartsAt] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const toast = useToast();
+
+  const createMutation = useMutation({
+    mutationFn: dropApi.create,
+    onSuccess: (newDrop) => {
+      // Update the drops cache with the new drop for real-time feel
+      queryClient.setQueryData(['drops'], (oldData: Drop[] | undefined) => {
+        if (!oldData) return [newDrop];
+        return [newDrop, ...oldData];
+      });
+
+      // Invalidate to ensure fresh data
+      queryClient.invalidateQueries({ queryKey: ['drops'] });
+
+      toast.showToast('Drop created successfully!', 'success');
+      navigate('/dashboard');
+    },
+    onError: (err: Error) => {
+      setError(err.message);
+      toast.showToast(err.message, 'error');
+    },
+  });
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -24,10 +51,19 @@ export function CreateDropPage() {
       return;
     }
 
-    // Note: The backend doesn't have a create drop endpoint in the requirements
-    // This is a placeholder for the UI
-    alert('Create drop functionality would be implemented here with a POST /drops endpoint');
-    navigate('/dashboard');
+    // Validate date format
+    const date = new Date(startsAt);
+    if (isNaN(date.getTime())) {
+      setError('Please enter a valid date');
+      return;
+    }
+
+    createMutation.mutate({
+      name: name.trim(),
+      category: category.trim(),
+      initialStock: stock,
+      startsAt: date.toISOString(),
+    });
   };
 
   return (

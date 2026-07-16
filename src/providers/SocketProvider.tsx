@@ -7,7 +7,6 @@ import { SocketContext } from "./socket.context";
 import { queryClient } from "../utils/queryClient";
 import type {
   Drop,
-  Reservation,
   Activity,
   StockUpdatePayload,
   PurchaseCreatedPayload,
@@ -25,7 +24,6 @@ export function SocketProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!isAuthenticated || !user) {
-      setSocket(null);
       return;
     }
 
@@ -37,6 +35,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       reconnectionDelay: 2000,
     });
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Socket initialization requires state update
     setSocket(newSocket);
 
     newSocket.on("connect", () => {
@@ -76,33 +75,12 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     });
 
     newSocket.on("reservation:expired", () => {
-      queryClient.setQueryData(
-        ["reservations"],
-        (oldData: { data: Reservation[] } | undefined) => {
-          if (!oldData?.data) return oldData;
-          return {
-            ...oldData,
-            data: oldData.data.filter((r) => r.status === "ACTIVE"),
-          };
-        },
-      );
+      queryClient.invalidateQueries({ queryKey: ["reservations"] });
       toastRef.current("Your reservation has expired", "error");
     });
 
     newSocket.on("purchase:completed", () => {
-      queryClient.setQueryData(
-        ["reservations"],
-        (oldData: { data: Reservation[] } | undefined) => {
-          if (!oldData?.data) return oldData;
-          return {
-            ...oldData,
-            data: oldData.data.map((r) => ({
-              ...r,
-              status: "PURCHASED" as const,
-            })),
-          };
-        },
-      );
+      queryClient.invalidateQueries({ queryKey: ["reservations"] });
       toastRef.current("Purchase completed successfully!", "success");
     });
 
@@ -139,6 +117,14 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       newSocket.off("activity:purchase_created");
       newSocket.disconnect();
     };
+  }, [isAuthenticated, user]);
+
+  // Handle unauthenticated state separately to avoid cascading renders
+  useEffect(() => {
+    if (!isAuthenticated || !user) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Cleanup requires state update
+      setSocket(null);
+    }
   }, [isAuthenticated, user]);
 
   return (
