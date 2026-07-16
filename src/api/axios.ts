@@ -21,7 +21,11 @@ axiosInstance.interceptors.request.use(
 
 axiosInstance.interceptors.response.use(
   (response) => response,
-  (error: AxiosError) => {
+  (error: AxiosError<{ success: boolean; message: string }>) => {
+    const backendMessage = error.response?.data?.message;
+    if (backendMessage) {
+      error.message = backendMessage;
+    }
     console.error('API Error:', error.message);
     return Promise.reject(error);
   }

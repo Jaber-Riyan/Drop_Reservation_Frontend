@@ -68,7 +68,7 @@ export interface ActivityResponse {
 
 export interface StockUpdatePayload {
   dropId: number;
-  availableStock: number;
+  stock: number;
 }
 
 export interface PurchaseCreatedPayload {
