@@ -4,10 +4,14 @@ import type { Drop, Reservation, Activity } from '../types';
 import type { StockUpdatePayload, PurchaseCreatedPayload } from '../types';
 import { SOCKET_EVENTS } from './events';
 
-export function setupSocketListeners(socket: Socket) {
+export function setupSocketListeners(socket: Socket, showToast: (message: string, type?: 'success' | 'error' | 'info') => void) {
   socket.on(SOCKET_EVENTS.DROP_STOCK_UPDATED, (payload: StockUpdatePayload) => {
     queryClient.setQueryData(['drops'], (oldData: { data: Drop[] } | undefined) => {
       if (!oldData?.data) return oldData;
+      const drop = oldData.data.find(d => d.id === payload.dropId);
+      if (drop && payload.availableStock > drop.availableStock) {
+        showToast(`Stock restocked for ${drop.name}! ${payload.availableStock} units available.`, 'info');
+      }
       return {
         ...oldData,
         data: oldData.data.map((drop) =>
@@ -31,6 +35,7 @@ export function setupSocketListeners(socket: Socket) {
         data: oldData.data.filter((reservation) => reservation.status === 'ACTIVE'),
       };
     });
+    showToast('Your reservation has expired', 'error');
   });
 
   socket.on(SOCKET_EVENTS.PURCHASE_COMPLETED, () => {
@@ -44,6 +49,7 @@ export function setupSocketListeners(socket: Socket) {
         })),
       };
     });
+    showToast('Purchase completed successfully!', 'success');
   });
 
   socket.on(SOCKET_EVENTS.ACTIVITY_PURCHASE_CREATED, (payload: PurchaseCreatedPayload) => {

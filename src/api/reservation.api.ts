@@ -16,7 +16,7 @@ export const reservationApi = {
   },
 
   getUserReservations: async (userId: number): Promise<Reservation[]> => {
-    const response = await axiosInstance.get<ReservationsResponse>(`/reservation/user/${userId}`);
+    const response = await axiosInstance.get<ReservationsResponse>(`/reservations/user/${userId}`);
     if (!response.data.success) {
       throw new Error(response.data.message || 'Failed to fetch reservations');
     }

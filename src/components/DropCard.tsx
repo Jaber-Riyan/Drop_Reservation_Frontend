@@ -1,5 +1,7 @@
 import { useAuth } from '../hooks/useAuth';
 import { useReservation } from '../hooks/useReservation';
+import { useToast } from './Toast';
+import { useNavigate } from 'react-router-dom';
 import type { Drop } from '../types';
 
 interface DropCardProps {
@@ -10,13 +12,26 @@ export function DropCard({ drop }: DropCardProps) {
   const { user } = useAuth();
   const { createReservation } = useReservation(user?.id);
   const isReserving = createReservation.isPending;
+  const toast = useToast();
+  const navigate = useNavigate();
 
   const hasStarted = new Date(drop.startsAt) <= new Date();
   const isOutOfStock = drop.availableStock === 0;
 
   const handleReserve = () => {
     if (!user) return;
-    createReservation.mutate({ userId: user.id, dropId: drop.id });
+    createReservation.mutate(
+      { userId: user.id, dropId: drop.id },
+      {
+        onError: (err: Error) => {
+          toast.showToast(err.message, 'error');
+        },
+        onSuccess: () => {
+          toast.showToast('Reservation created successfully!', 'success');
+          navigate('/reservation');
+        },
+      }
+    );
   };
 
   return (

@@ -29,11 +29,7 @@ export function useReservation(userId: number | undefined) {
         if (!oldData?.data) return oldData;
         return {
           ...oldData,
-          data: oldData.data.map((reservation) =>
-            reservation.id === variables.reservationId
-              ? { ...reservation, status: 'PURCHASED' as const }
-              : reservation
-          ),
+          data: oldData.data.filter((reservation) => reservation.id !== variables.reservationId),
         };
       });
     },

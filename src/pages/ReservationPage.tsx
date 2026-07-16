@@ -2,19 +2,31 @@ import { useAuth } from '../hooks/useAuth';
 import { useReservation } from '../hooks/useReservation';
 import { Countdown } from '../components/Countdown';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '../components/Toast';
 
 export function ReservationPage() {
   const { user } = useAuth();
   const { activeReservation, isLoading, createPurchase, createPurchase: purchase } = useReservation(user?.id);
   const navigate = useNavigate();
+  const toast = useToast();
 
   const handlePurchase = () => {
     if (!activeReservation || !user) return;
-    createPurchase.mutate({
-      userId: user.id,
-      dropId: activeReservation.dropId,
-      reservationId: activeReservation.id,
-    });
+    createPurchase.mutate(
+      {
+        userId: user.id,
+        dropId: activeReservation.dropId,
+        reservationId: activeReservation.id,
+      },
+      {
+        onError: (err: Error) => {
+          toast.showToast(err.message, 'error');
+        },
+        onSuccess: () => {
+          toast.showToast('Purchase completed successfully!', 'success');
+        },
+      }
+    );
   };
 
   if (isLoading) {
@@ -87,6 +99,7 @@ export function ReservationPage() {
             <p className="text-sm text-red-600 mt-1">This reservation is no longer valid.</p>
           </div>
         )}
+
 
         {!isPurchased && !isExpired && (
           <button

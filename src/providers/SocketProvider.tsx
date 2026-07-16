@@ -1,11 +1,13 @@
 import { useEffect, type ReactNode } from 'react';
 import { initializeSocket, disconnectSocket, getSocket } from '../socket/socket';
 import { useAuth } from '../hooks/useAuth';
+import { useToast } from '../components/Toast';
 import { setupSocketListeners } from '../socket/listeners';
 import { SocketContext } from './socket.context';
 
 export function SocketProvider({ children }: { children: ReactNode }) {
   const { user, isAuthenticated } = useAuth();
+  const toast = useToast();
 
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -19,7 +21,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
         console.log('Socket disconnected');
       });
 
-      setupSocketListeners(socket);
+      setupSocketListeners(socket, toast.showToast);
 
       return () => {
         disconnectSocket();
@@ -27,7 +29,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     } else {
       disconnectSocket();
     }
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user, toast]);
 
   return (
     <SocketContext.Provider value={{ socket: getSocket() }}>
