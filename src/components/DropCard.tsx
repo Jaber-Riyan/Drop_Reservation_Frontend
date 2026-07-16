@@ -42,7 +42,7 @@ export function DropCard({ drop }: DropCardProps) {
           <p className="text-sm text-gray-500 mt-1">{drop.category}</p>
         </div>
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-          {drop.availableStock} left
+          {drop.availableStock ?? 0} left
         </span>
       </div>
 

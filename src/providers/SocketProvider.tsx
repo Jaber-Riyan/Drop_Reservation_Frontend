@@ -52,16 +52,18 @@ export function SocketProvider({ children }: { children: ReactNode }) {
         if (!oldData) return oldData;
 
         const drop = oldData.find((d) => d.id === payload.dropId);
+        const stockValue = payload.stock ?? 0;
+        
         if (drop) {
           toastRef.current(
-            `Stock updated: "${drop.name}" now has ${payload.stock} units available`,
+            `Stock updated: "${drop.name}" now has ${stockValue} units available`,
             "info",
           );
         }
 
         return oldData.map((drop) =>
           drop.id === payload.dropId
-            ? { ...drop, availableStock: payload.stock }
+            ? { ...drop, availableStock: stockValue }
             : drop,
         );
       });
